@@ -1,0 +1,86 @@
+---
+- hosts: provisioner
+  connection: local
+  gather_facts: False
+
+  vars:
+    key_name: my_aws
+    instance_type: t2.micro
+    sever_type: web
+    security_group: "{{ sever_type }}_sg"
+    # image of centos-7-pke-202002261416
+    image: ami-0d26778caf1dc9e67
+    region: us-east-2
+    count: 1
+  vars_files:
+    - aws_pass.yml
+
+  tasks:
+    - name: Pre-provision EC2 instance(s)
+      block:
+
+      - name: Create key pair
+        ec2_key:
+          name: "{{ key_name }}"
+          key_material: "{{ lookup('file', '~/.ssh/{{ key_name }}.pub') }}"
+          region: "{{ region }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+
+      - name: Create a security group
+        ec2_group:
+          name: "{{ security_group }}"
+          description: The web servers security group
+          region: "{{ region }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          rules:
+            - proto: tcp
+              from_port: 22
+              to_port: 22
+              cidr_ip: 0.0.0.0/0
+            - proto: tcp
+              from_port: 80
+              to_port: 80
+              cidr_ip: 0.0.0.0/0
+            - proto: tcp
+              from_port: 443
+              to_port: 443
+              cidr_ip: 0.0.0.0/0
+          rules_egress:
+            - proto: all
+              cidr_ip: 0.0.0.0/0
+
+    - name: Provision instance(s)
+      ec2:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        group: "{{ security_group }}"
+        instance_type: "{{ instance_type }}"
+        image: "{{ image }}"
+        wait: true
+        wait_timeout: 500
+        region: "{{ region }}"
+        key_name: "{{ key_name }}"
+        monitoring: yes
+        count: "{{count}}"
+        instance_tags:
+          type: "webserver"
+      register: ec2_vm
+
+    - name: Post-provision EC2 instance(s)
+      block:
+
+      - name: Add new instance to host group
+        add_host:
+          name: "{{ item.public_ip }}"
+          groups: webservers
+        loop: "{{ ec2_vm.instances }}"
+
+      - name: Wait for SSH to come up
+        delegate_to: "{{ item.public_dns_name }}"
+        remote_user: centos
+        wait_for_connection:
+          delay: 60
+          timeout: 300
+        loop: "{{ ec2_vm.instances }}"

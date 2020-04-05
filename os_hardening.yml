@@ -1,0 +1,22 @@
+---
+- hosts: "{{ host_groups }}"
+  gather_facts: true
+  remote_user: "{{ user }}"
+  become: yes
+  roles:
+    # Use os-hardening role to configre:
+    # Configures package management e.g. allows only signed packages
+    # Remove packages with known issues
+    # Configures pam and pam_limits module
+    # Shadow password suite configuration
+    # Configures system path permissions
+    # Disable core dumps via soft limits
+    # Restrict Root Logins to System Console
+    # Set SUIDs
+    # Configures kernel parameters via sysctl
+    # Install and configure auditd
+    - dev-sec.os-hardening
+  vars:
+    sysctl_overwrite:
+      # Enable IPv4 traffic forwarding.
+      net.ipv4.ip_forward: 1

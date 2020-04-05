@@ -1,0 +1,17 @@
+- import_playbook: ec2_provison.yml
+- import_playbook: update_iptables.yml
+  vars:
+    host_groups: webservers
+    user: centos
+- import_playbook: os_hardening.yml
+  vars:
+    host_groups: webservers
+    user: centos
+- import_playbook: config_docker_service.yml
+  vars:
+    host_groups: webservers
+    user: centos
+- import_playbook: nginx_container_setup.yml
+  vars:
+    host_groups: webservers
+    user: centos
