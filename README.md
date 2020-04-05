@@ -1,19 +1,19 @@
 # ansible_aws_ec2
 
-##Description
+## Description
 This sample ansible playbook will provision an AWS EC2 instance (with CentOS image by default) with some additional configuration and settings, including:
 * apply security group
 * apply os hardening and firewall settings
 * install docker
 * deploy container
 * Additional tasks related to that container 
-##Requirements
+## Requirements
 - Ansible role [os-hardening](https://github.com/dev-sec/ansible-os-hardening).
-   ####Installation
+   #### Installation
    ```
    ansible-galaxy install dev-sec.os-hardening
    ```
-##The execution result likes below:
+## The execution result likes below:
 ```
 $ ansible-playbook -i inventory main.yml --vault-password-file ~/vault.pass
 
